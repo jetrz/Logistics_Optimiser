@@ -76,3 +76,34 @@ def optimizeSingleTests(type, vars, iters):
         df = pd.DataFrame(profitsSingleDayVaryDistricts)
         fig = px.line(df, x='iteration', y='profit', color='name')
         plotly.offline.plot(fig,filename='profitsSingleDayVaryDistricts.html',config={'displayModeBar': False})
+    elif (type == 'varyDriverEfficiencyUpperLimit'):
+        profitsSingleDayVaryDEUL = {
+            'name' : [],
+            'iteration' : [],
+            'profit' : []
+        }
+        
+        for i in range(iters):
+            for j in range(len(vars)):
+                currCat = 'Upper Limit of Driver Efficiency: ' + str(vars[j])
+                t = threading.Thread(target=optimizeSingleDay, 
+                                                    args=(
+                                                        profitsSingleDayVaryDEUL, # dataDict
+                                                        currCat, # cat
+                                                        i, # iteration
+                                                        28, # nDistricts
+                                                        45, # nDrivers
+                                                        1300, # Total Parcels
+                                                        10, # costDelivered
+                                                        8, # costUndelivered
+                                                        20, # costDriver
+                                                        8, # maxHours
+                                                        3, # minDriverEfficiency
+                                                        vars[j], # maxDriverEfficiency
+                                                    ))
+                t.start()
+                t.join(timeout=300)
+            
+        df = pd.DataFrame(profitsSingleDayVaryDEUL)
+        fig = px.line(df, x='iteration', y='profit', color='name')
+        plotly.offline.plot(fig,filename='profitsSingleDayVaryDEUL.html',config={'displayModeBar': False})

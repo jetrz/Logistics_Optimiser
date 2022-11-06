@@ -30,7 +30,7 @@ def optimizePeriodTests(type, vars, nDays):
                                                     5, # nDistricts
                                                     var, # nDrivers
                                                     1300, # totalParcelsAvg
-                                                    130, # totalParcelsSD
+                                                    200, # totalParcelsSD
                                                     10, # costDelivered
                                                     8, # costUndelivered
                                                     20, # costDriver
@@ -44,3 +44,34 @@ def optimizePeriodTests(type, vars, nDays):
         df = pd.DataFrame(profitsTimePeriodVaryDrivers)
         fig = px.line(df, x='day', y='profit', color='name')
         plotly.offline.plot(fig,filename='profitsTimePeriodVaryDrivers.html',config={'displayModeBar': False})
+    elif (type == 'varyDistrict'):
+        profitsTimePeriodVaryDistricts = {
+            'name' : [],
+            'day' : [],
+            'profit' : []
+        }
+        
+        for var in vars:
+            currCat = str(var) + ' Districts'
+            t = threading.Thread(target=optimizeOverPeriod, 
+                                                args=(
+                                                    profitsTimePeriodVaryDistricts, # dataDict
+                                                    currCat, # cat
+                                                    nDays, # nDays
+                                                    var, # nDistricts
+                                                    10, # nDrivers
+                                                    650, # totalParcelsAvg
+                                                    65, # totalParcelsSD
+                                                    10, # costDelivered
+                                                    8, # costUndelivered
+                                                    20, # costDriver
+                                                    8, # maxHours
+                                                    3, # minDriverEfficiency
+                                                    10, # maxDriverEfficiency
+                                                ))
+            t.start()
+            t.join(timeout=300)
+            
+        df = pd.DataFrame(profitsTimePeriodVaryDistricts)
+        fig = px.line(df, x='day', y='profit', color='name')
+        plotly.offline.plot(fig,filename='profitsTimePeriodVaryDistricts.html',config={'displayModeBar': False})

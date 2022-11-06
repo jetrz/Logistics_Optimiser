@@ -3,16 +3,17 @@ from .randomizeParcelDist import randomizeParcelDist
 
 import numpy as np
 import random
-from rsome import ro
+from rsome import norm, ro
 from rsome import grb_solver as grb
 
-def optimizeOverPeriod(dataDict, cat, nDays, nDistricts, nDrivers, totalParcelsAvg, totalParcelsSD, costDelivered, costUndelivered, costDriver, maxHours, minDriverEfficiency, maxDriverEfficiency):
+def optimizeWithUncertainty(dataDict, cat, returnRate, nDays, nDistricts, nDrivers, totalParcelsAvg, totalParcelsSD, costDelivered, costUndelivered, costDriver, maxHours, minDriverEfficiency, maxDriverEfficiency):
     """
-    Optimizes capacity planning over a period of time.
+    Optimizes capacity planning over a period of time, with a chance for parcels to be returned.
 
     Args:
         dataDict (object): Data object to store return values
         cat (string): Category of current call
+        returnRate (float): Average return rate of a delivered parcel
         nDays (int): Number of days to run optimizer over
         nDistricts (int): Number of districts to deliver to
         nDrivers (int): Number of drivers available
@@ -42,9 +43,11 @@ def optimizeOverPeriod(dataDict, cat, nDays, nDistricts, nDrivers, totalParcelsA
     isDelivering = model.dvar((nDays, nDistricts, nDrivers), 'B') # 3D Matrix to keep track if a driver is delivering to a district each day
     undeliveredParcels = model.dvar(nDays, 'I') # List to track the number of undelivered parcels each day
     profits = model.dvar(nDays, 'C') # Keeps track of the profits of each day
+    returnChance = model.rvar(nDays, 'C') # List of probability of a parcel being returned for each day.
+    uset = (0 <= returnChance, norm(returnChance, np.infty) <= 1, norm(returnChance, 1) <= returnRate*nDays)
     
     # Objective
-    model.max(profits.sum())
+    model.maxmin(profits.sum(), uset)
 
     # Constraints
     # Daily profit depends on number of parcels succesfully delivered and number of hours worked across all drivers
@@ -54,8 +57,11 @@ def optimizeOverPeriod(dataDict, cat, nDays, nDistricts, nDrivers, totalParcelsA
     model.st(undeliveredParcels[0] >= baseParcels[0]-deliveringAmt[0].sum())
     model.st(undeliveredParcels[i] >= baseParcels[i]+undeliveredParcels[i-1]-deliveringAmt[i].sum() for i in range(1, nDays))
 
-    # Each driver cannot deliver more than his efficiency x hours
-    model.st(0 <= deliveringAmt, deliveringAmt <= efficiencyMatrix*deliveringHours)
+    # Each driver cannot deliver more than his efficiency x hours, factoring in return chance
+    for i in range(nDays):
+        for j in range(nDistricts):
+            for k in range(nDrivers):
+                model.st(0 <= deliveringAmt[i][j][k], (deliveringAmt[i][j][k] <= efficiencyMatrix[i][j][k]*deliveringHours[i][j][k]*(1-returnChance[i])))
             
     # Each driver cannot drive more hours than the max allowed
     model.st(0 <= deliveringHours, deliveringHours <= isDelivering*maxHours)

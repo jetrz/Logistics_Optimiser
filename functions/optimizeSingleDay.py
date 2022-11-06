@@ -44,14 +44,10 @@ def optimizeSingleDay(dataDict, cat, iteration, nDistricts, nDrivers, totalParce
 
     # Constraints
     # Each driver cannot deliver more than his efficiency x hours
-    for i in range(nDistricts):
-        for j in range(nDrivers):
-            model.st(0 <= deliveringAmt[i][j], deliveringAmt[i][j] <= efficiencyMatrix[i][j]*deliveringHours[i][j])
+    model.st(0 <= deliveringAmt, deliveringAmt <= efficiencyMatrix*deliveringHours)
             
     # Each driver cannot drive more hours than the max allowed
-    for i in range(nDistricts):
-        for j in range(nDrivers):
-            model.st(0 <= deliveringHours[i][j], deliveringHours[i][j] <= isDelivering[i][j]*maxHours)
+    model.st(0 <= deliveringHours, deliveringHours <= isDelivering*maxHours)
         
     # Each driver can only deliver to 1 district
     model.st(isDelivering.sum(axis=0) <= 1)
@@ -60,7 +56,6 @@ def optimizeSingleDay(dataDict, cat, iteration, nDistricts, nDrivers, totalParce
     model.st(deliveringAmt[i].sum() <= parcels[i] for i in range(nDistricts))
 
     model.solve(solver=grb)
-    # print('deliveringAmt: ', deliveringAmt.get())
     # print('deliveringHours: ', deliveringHours.get())
     dataDict['name'].append(cat)
     dataDict['iteration'].append(iteration)
