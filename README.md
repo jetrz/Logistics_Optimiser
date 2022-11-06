@@ -1,5 +1,5 @@
 # Logistics Optimiser
- Capacity & Resource optimiser for logstics companies!
+Capacity & Resource optimiser for delivery companies!
 
 Given the number of drivers & discticts, driver efficiency, and more, our model allocates drivers to districts to maximise profit! <br>
 Please visit [here](https://docs.google.com/presentation/d/1lxU26y4mf7Nmt6frD7sL42esgbJ4AWX2/edit?usp=sharing&ouid=108841601711736669109&rtpof=true&sd=true) for a comprehensive slide deck explaining its capabilities and implementation. <br>
